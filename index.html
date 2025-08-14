@@ -176,13 +176,13 @@
             const sinais = ["<", "leq", ">", "geq"];
             
             while (true) {
-                const a = randomInt(-12, 12);
-                const b = randomInt(-12, 12);
-                const c = randomInt(-12, 12);
+                const a = inteiros[Math.floor(Math.random() * inteiros.length)];
+                const b = inteiros[Math.floor(Math.random() * inteiros.length)];
+                const c = inteiros[Math.floor(Math.random() * inteiros.length)];
                 const d = randomInt(1, 9);
-                const e = randomInt(-12, 12);
-                const f = randomInt(-12, 12);
-                const g = randomInt(-12, 12);
+                const e = inteiros[Math.floor(Math.random() * inteiros.length)];
+                const f = inteiros[Math.floor(Math.random() * inteiros.length)];
+                const g = inteiros[Math.floor(Math.random() * inteiros.length)];
                 const h = randomInt(1, 9);
                 const sinal = sinais[randomInt(0, 3)];
 
@@ -278,7 +278,7 @@
 
             if (finalX < 0) {
                 if (nivel === 'facil') {
-                    steps.push("O coeficiente de 'x' é negativo. Precisamos multiplicar por $(-1)$ e inverter o sinal da inequação.");
+                    steps.push("O coeficiente de 'x' é negativo. Precisamos multiplicar por -1 e inverter o sinal da inequação.");
                 } else if (nivel === 'medio') {
                     steps.push("3. O coeficiente de 'x' é negativo. Multiplicamos por -1 e invertemos o sinal.");
                 }
@@ -304,8 +304,12 @@
             } else if (nivel === 'medio') {
                 steps.push("4. Dividimos e simplificamos o resultado final.");
             }
+            if (simplifiedNum < 0) {
+                const simplifiedNum1 = -simplifiedNum;
+                const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `-\\frac{${simplifiedNum1}}{${simplifiedDen}}`;}else{
+                    const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
+                }
 
-            const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
             const displaySinal = mathJaxSinais[finalSinal];
             steps.push(`Solução final: $$ x ${displaySinal} ${finalSolutionDisplay} $$`);
 
