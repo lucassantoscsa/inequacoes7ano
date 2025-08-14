@@ -51,20 +51,15 @@
     <div class="max-w-4xl w-full mx-auto p-6 bg-white rounded-xl shadow-lg">
         <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-primary">Resolução de Inequações</h1>
         
-        <!-- Student Info and Controls -->
         <div id="controls-section" class="flex flex-col sm:flex-row justify-between items-center bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
             <input type="text" id="aluno-name" placeholder="Digite seu nome completo" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg mb-4 sm:mb-0">
             <button id="start-btn" class="btn btn-primary w-full sm:w-auto">Começar</button>
         </div>
 
-        <!-- Main Game Area -->
         <div id="game-area" class="hidden">
-            <!-- Inequation Display -->
             <div id="inequation-display" class="math-display text-center text-xl sm:text-2xl font-mono">
-                <!-- Inequation will be rendered here -->
-            </div>
+                </div>
 
-            <!-- Answer Input -->
             <div class="answer-input-group">
                 <span class="text-xl sm:text-2xl font-bold">x</span>
                 
@@ -79,20 +74,16 @@
                 <input type="text" id="denominador-input" placeholder="Denominador" class="w-24 sm:w-32 px-4 py-2 text-center rounded-lg border border-gray-300">
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex flex-wrap justify-center mt-6 space-x-2 sm:space-x-4">
                 <button id="submit-btn" class="btn btn-primary">Verificar</button>
                 <button id="help-btn" class="btn btn-secondary">Ajuda</button>
                 <button id="next-btn" class="btn btn-primary hidden">Próxima</button>
             </div>
             
-            <!-- Feedback and Solution Area -->
             <div id="feedback-area" class="mt-8 p-4 rounded-lg">
-                <!-- Feedback and solution steps will be displayed here -->
-            </div>
+                </div>
         </div>
 
-        <!-- Final Results Area -->
         <div id="results-area" class="hidden text-center mt-8 p-6 bg-gray-100 rounded-lg shadow">
             <h2 class="text-2xl font-bold mb-4">Resultados Finais</h2>
             <p id="final-results" class="text-lg"></p>
@@ -102,8 +93,8 @@
     <script>
         // Global variables to manage game state
         let aluno = "";
-        let feitas = 0;
-        let certas = 0;
+        let perguntasFeitas = 0;
+        let perguntasCertas = 0;
         let inicio = 0;
         let currentQuestionData = {};
         const MAX_QUESTIONS = 5; // You can change the number of questions here
@@ -246,6 +237,11 @@
             const rightX = (mmc / h) * e * f;
             const rightG = (mmc / h) * e * g;
             
+            // This case should be blocked by the equation generation logic, but kept for robustness
+            if (leftX - rightX === 0) {
+                return { sinal: null, num: null, den: null, steps: ["A inequação é indefinida, pois o termo de 'x' foi cancelado."] };
+            }
+
             if (nivel === 'facil' || nivel === 'medio') {
                  let leftExpression = formatExpression(leftX, leftC);
                  let rightExpression = formatExpression(rightX, rightG);
@@ -256,11 +252,6 @@
             const finalX = leftX - rightX;
             const finalC = rightG - leftC;
             
-            // This case should be blocked by the equation generation logic, but kept for robustness
-            if (finalX === 0) {
-                return { sinal: null, num: null, den: null, steps: ["A inequação é indefinida, pois o termo de 'x' foi cancelado."] };
-            }
-
             if (nivel === 'facil') {
                  let finalStepExpression = formatExpression(finalX, 0);
                  steps.push(`$$ ${finalStepExpression} ${sinal} ${finalC} $$`);
@@ -282,8 +273,8 @@
             }
             
             const commonDivisorFinal = gcd(num, den);
-            const simplifiedNum = num / commonDivisorFinal;
-            const simplifiedDen = den / commonDivisorFinal;
+            let simplifiedNum = num / commonDivisorFinal;
+            let simplifiedDen = den / commonDivisorFinal;
 
             // Normalize the sign to the numerator for consistent comparison and display
             if (simplifiedDen < 0) {
@@ -309,7 +300,6 @@
         startBtn.addEventListener('click', () => {
             aluno = alunoNameInput.value.trim();
             if (aluno === "") {
-                // Custom alert box since window.alert() is not available
                 const alertBox = document.createElement('div');
                 alertBox.innerHTML = `
                     <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
@@ -335,11 +325,11 @@
                 return;
             }
             inicio = Date.now();
-            feitas = 0;
-            certas = 0;
+            perguntasFeitas = 0;
+            perguntasCertas = 0;
             controlsSection.classList.add('hidden');
             gameArea.classList.remove('hidden');
-            nextQuestion();
+            gerarInequacao();
         });
 
         // Submit button event listener
@@ -369,9 +359,8 @@
 
             if (userSinal === correctSinal && userSimplifiedNum === correctNum && userSimplifiedDen === correctDen) {
                 feedbackArea.innerHTML = `<p class="text-green-600 font-bold text-center">Parabéns, você acertou!</p>`;
-                certas++;
+                perguntasCertas++;
             } else {
-                // Get full step-by-step solution for incorrect answers
                 const { steps: fullSteps } = resolverInequacao('facil');
                 let stepsHtml = fullSteps.map(step => `<p class="text-gray-700">${step}</p>`).join('');
                 feedbackArea.innerHTML = `<p class="text-red-600 font-bold text-center">Infelizmente você errou. Entenda como resolver:</p><div class="math-display">${stepsHtml}</div>`;
@@ -386,9 +375,9 @@
         // Help button event listener
         helpBtn.addEventListener('click', () => {
             let nivel = 'facil';
-            if (feitas > 0 && certas / feitas > 0.75) {
+            if (perguntasFeitas > 0 && (perguntasCertas / perguntasFeitas) > 0.75) {
                 nivel = 'medio';
-            } else if (feitas > 0 && certas / feitas > 0.25) {
+            } else if (perguntasFeitas > 0 && (perguntasCertas / perguntasFeitas) > 0.25) {
                 nivel = 'medio';
             } else {
                 nivel = 'facil';
@@ -401,8 +390,8 @@
 
         // Next button event listener
         nextBtn.addEventListener('click', () => {
-            feitas++;
-            if (feitas >= MAX_QUESTIONS) {
+            perguntasFeitas++;
+            if (perguntasFeitas >= MAX_QUESTIONS) {
                 showResults();
                 return;
             }
@@ -417,23 +406,12 @@
             gerarInequacao();
         });
 
-        // Function to start the next question
-        const nextQuestion = () => {
-            gerarInequacao();
-            // This is the first question
-            if (feitas === 0) {
-              feitas = 1;
-            } else {
-              feitas++;
-            }
-        };
-
         // Function to display final results
         const showResults = () => {
             gameArea.classList.add('hidden');
             resultsArea.classList.remove('hidden');
             const totalTime = ((Date.now() - inicio) / 1000).toFixed(2);
-            const score = ((certas / feitas) * 100).toFixed(2);
+            const score = ((perguntasCertas / perguntasFeitas) * 100).toFixed(2);
             finalResults.innerHTML = `
                 <p>Nome do Aluno: <span class="font-bold">${aluno}</span></p>
                 <p>Percentual de Acertos: <span class="font-bold text-primary">${score}%</span></p>
