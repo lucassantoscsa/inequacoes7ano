@@ -213,20 +213,20 @@
             let steps = [];
 
             if (nivel === 'facil' || nivel === 'medio') {
-                steps.push("Primeiro, vamos simplificar os termos se possível.");
+                steps.push("Primeiro, vamos simplificar os termos se possível.\\\\");
                 let simplifiedLeft = false;
                 if (gcd(a, d) !== 1) {
                     const commonDivisor = gcd(a, d);
                     a = a / commonDivisor;
                     d = d / commonDivisor;
                     simplifiedLeft = true;
-                    steps.push(`Simplificando o lado esquerdo, dividindo o numerador e o denominador por ${commonDivisor}.`);
+                    steps.push(`Simplificando o lado esquerdo, dividindo o numerador e o denominador por ${commonDivisor}.\\\\`);
                 }
                 if (gcd(e, h) !== 1) {
                     const commonDivisor = gcd(e, h);
                     e = e / commonDivisor;
                     h = h / commonDivisor;
-                    steps.push(`Simplificando o lado direito, dividindo o numerador e o denominador por ${commonDivisor}.`);
+                    steps.push(`Simplificando o lado direito, dividindo o numerador e o denominador por ${commonDivisor}.\\\\`);
                 }
                 if (simplifiedLeft) {
                     const displaySinal = mathJaxSinais[sinal];
@@ -243,7 +243,7 @@
                 steps.push(`Ficamos com: $$ \\frac{${newLeftNum}(${b}x${getSign(c)})}{${mmc}} ${displaySinal} \\frac{${newRightNum}(${f}x${getSign(g)})}{${mmc}} $$`);
                 steps.push("Agora podemos remover os denominadores e aplicar a propriedade distributiva.");
             } else if (nivel === 'medio') {
-                steps.push("1. Removemos os denominadores e aplicamos a propriedade distributiva.");
+                steps.push("Removemos os denominadores e aplicamos a propriedade distributiva.\\\\");
             }
 
             const leftX = (mmc / d) * a * b;
@@ -280,7 +280,7 @@
                 if (nivel === 'facil') {
                     steps.push("O coeficiente de 'x' é negativo. Precisamos multiplicar por -1 e inverter o sinal da inequação.");
                 } else if (nivel === 'medio') {
-                    steps.push("3. O coeficiente de 'x' é negativo. Multiplicamos por -1 e invertemos o sinal.");
+                    steps.push("O coeficiente de 'x' é negativo. Multiplicamos por -1 e invertemos o sinal.");
                 }
                 finalSinal = sinalMapping[sinal];
                 den = Math.abs(den);
@@ -311,7 +311,7 @@
             steps.push(`$$ x ${displaySinal} ${fracDisplay} $$`);
                 steps.push(`Simplificamos o resultado dividindo numerador e denominador por ${commonDivisorFinal}.`);
             } else if (nivel === 'medio') {
-                steps.push("4. Dividimos e simplificamos o resultado final.");
+                steps.push("Dividimos e simplificamos o resultado final.\\\\");
             }
 
             let finalSolutionDisplay;
