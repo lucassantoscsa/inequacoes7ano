@@ -305,11 +305,19 @@
                 steps.push("4. Dividimos e simplificamos o resultado final.");
             }
 
-            const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
+            let finalSolutionDisplay;
+            if (simplifiedDen === 1) {
+                finalSolutionDisplay = simplifiedNum; // inteiro puro
+            } else if (simplifiedNum < 0) {
+                finalSolutionDisplay = `-\\frac{${Math.abs(simplifiedNum)}}{${simplifiedDen}}`;
+            } else {
+                finalSolutionDisplay = `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
+            }
+
             const displaySinal = mathJaxSinais[finalSinal];
             steps.push(`Solução final: $$ x ${displaySinal} ${finalSolutionDisplay} $$`);
 
-            return { sinal: finalSinal, num: simplifiedNum, den: simplifiedDen, steps };
+return { sinal: finalSinal, num: simplifiedNum, den: simplifiedDen, steps };
         };
 
         // Start button event listener
