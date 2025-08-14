@@ -64,12 +64,11 @@
                 <span class="text-xl sm:text-2xl font-bold">x</span>
                 
                 <select id="sinal-select" class="px-4 py-2 rounded-lg border border-gray-300 text-lg">
-    <option value="<">&lt;</option>
-    <option value="\\leq">&le;</option>
-    <option value=">">&gt;</option>
-    <option value="\\geq">&ge;</option>
-</select>
-
+                    <option value="<">&lt;</option>
+                    <option value="leq">&le;</option>
+                    <option value=">">&gt;</option>
+                    <option value="geq">&ge;</option>
+                </select>
                 <input type="text" id="numerador-input" placeholder="Numerador" class="w-24 sm:w-32 px-4 py-2 text-center rounded-lg border border-gray-300">
                 <span class="text-xl sm:text-2xl font-bold">/</span>
                 <input type="text" id="denominador-input" placeholder="Denominador" class="w-24 sm:w-32 px-4 py-2 text-center rounded-lg border border-gray-300">
@@ -133,17 +132,14 @@
         const lcm = (a, b) => (a === 0 || b === 0) ? 0 : Math.abs(a * b) / gcd(a, b);
         
         // Function to handle sign display for positive and negative numbers
-        // This function is for terms inside parentheses like (bx+c)
         const getSign = (num) => num >= 0 ? `+${num}` : `${num}`;
         
         // Function to format the expression for the step-by-step guide
         const formatExpression = (xCoeff, cCoeff) => {
             let expression = '';
-            // Handle the x-term
             if (xCoeff !== 0) {
                 expression = `${xCoeff}x`;
             }
-            // Handle the constant term
             if (cCoeff !== 0) {
                 if (xCoeff === 0) {
                     expression = `${cCoeff}`;
@@ -151,18 +147,33 @@
                     expression += cCoeff > 0 ? ` + ${cCoeff}` : ` - ${Math.abs(cCoeff)}`;
                 }
             }
-            // Handle case where both are zero
             if (xCoeff === 0 && cCoeff === 0) {
                 expression = '0';
             }
             return expression;
+        };
+        
+        // Mapeamento dos sinais para a renderização do MathJax
+        const mathJaxSinais = {
+            "<": "<",
+            "leq": "\\leq",
+            ">": ">",
+            "geq": "\\geq"
+        };
+        
+        // Mapeamento para inverter o sinal da inequação
+        const sinalMapping = {
+            "<": ">",
+            "leq": "geq",
+            ">": "<",
+            "geq": "leq"
         };
 
         // Function to generate a new inequation
         const gerarInequacao = () => {
             const inteiros = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
             const naturais = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            const sinais = ["<", "\\leq", ">", "\\geq"];
+            const sinais = ["<", "leq", ">", "geq"];
             
             while (true) {
                 const a = randomInt(-12, 12);
@@ -190,7 +201,8 @@
         // Renders the inequation using MathJax
         const renderInequation = () => {
             const { a, b, c, d, sinal, e, f, g, h } = currentQuestionData;
-            inequationDisplay.innerHTML = `$$ \\frac{${a}(${b}x${getSign(c)})}{${d}} ${sinal} \\frac{${e}(${f}x${getSign(g)})}{${h}} $$`;
+            const displaySinal = mathJaxSinais[sinal];
+            inequationDisplay.innerHTML = `$$ \\frac{${a}(${b}x${getSign(c)})}{${d}} ${displaySinal} \\frac{${e}(${f}x${getSign(g)})}{${h}} $$`;
             MathJax.typeset();
         };
 
@@ -198,7 +210,6 @@
         const resolverInequacao = (nivel) => {
             let { a, b, c, d, sinal, e, f, g, h } = currentQuestionData;
             const originalSinal = sinal;
-            const sinalMapping = { "<": ">", "\\leq": "\\geq", ">": "<", "\\geq": "\\leq" };
             let steps = [];
 
             if (nivel === 'facil' || nivel === 'medio') {
@@ -218,7 +229,8 @@
                     steps.push(`Simplificando o lado direito, dividindo o numerador e o denominador por ${commonDivisor}.`);
                 }
                 if (simplifiedLeft) {
-                    steps.push(`Nova inequação: $$ \\frac{${a}(${b}x${getSign(c)})}{${d}} ${sinal} \\frac{${e}(${f}x${getSign(g)})}{${h}} $$`);
+                    const displaySinal = mathJaxSinais[sinal];
+                    steps.push(`Nova inequação: $$ \\frac{${a}(${b}x${getSign(c)})}{${d}} ${displaySinal} \\frac{${e}(${f}x${getSign(g)})}{${h}} $$`);
                 }
             }
 
@@ -227,7 +239,8 @@
                 steps.push(`Para remover os denominadores, igualamos eles tirando o MMC de ${d} e ${h}, que é ${mmc}.`);
                 const newLeftNum = (mmc / d) * a;
                 const newRightNum = (mmc / h) * e;
-                steps.push(`Ficamos com: $$ \\frac{${newLeftNum}(${b}x${getSign(c)})}{${mmc}} ${sinal} \\frac{${newRightNum}(${f}x${getSign(g)})}{${mmc}} $$`);
+                const displaySinal = mathJaxSinais[sinal];
+                steps.push(`Ficamos com: $$ \\frac{${newLeftNum}(${b}x${getSign(c)})}{${mmc}} ${displaySinal} \\frac{${newRightNum}(${f}x${getSign(g)})}{${mmc}} $$`);
                 steps.push("Agora podemos remover os denominadores e aplicar a propriedade distributiva.");
             } else if (nivel === 'medio') {
                 steps.push("1. Removemos os denominadores e aplicamos a propriedade distributiva.");
@@ -238,7 +251,6 @@
             const rightX = (mmc / h) * e * f;
             const rightG = (mmc / h) * e * g;
             
-            // This case should be blocked by the equation generation logic, but kept for robustness
             if (leftX - rightX === 0) {
                 return { sinal: null, num: null, den: null, steps: ["A inequação é indefinida, pois o termo de 'x' foi cancelado."] };
             }
@@ -246,7 +258,8 @@
             if (nivel === 'facil' || nivel === 'medio') {
                  let leftExpression = formatExpression(leftX, leftC);
                  let rightExpression = formatExpression(rightX, rightG);
-                 steps.push(`$$ ${leftExpression} ${sinal} ${rightExpression} $$`);
+                 const displaySinal = mathJaxSinais[sinal];
+                 steps.push(`$$ ${leftExpression} ${displaySinal} ${rightExpression} $$`);
                  steps.push("Isolamos os termos com 'x' do lado esquerdo e os constantes do lado direito.");
             }
 
@@ -255,7 +268,8 @@
             
             if (nivel === 'facil') {
                  let finalStepExpression = formatExpression(finalX, 0);
-                 steps.push(`$$ ${finalStepExpression} ${sinal} ${finalC} $$`);
+                 const displaySinal = mathJaxSinais[sinal];
+                 steps.push(`$$ ${finalStepExpression} ${displaySinal} ${finalC} $$`);
             }
 
             let num = finalC;
@@ -277,7 +291,6 @@
             let simplifiedNum = num / commonDivisorFinal;
             let simplifiedDen = den / commonDivisorFinal;
 
-            // Normalize the sign to the numerator for consistent comparison and display
             if (simplifiedDen < 0) {
                 simplifiedNum = -simplifiedNum;
                 simplifiedDen = -simplifiedDen;
@@ -285,14 +298,16 @@
 
             if (nivel === 'facil') {
                 steps.push(`Dividimos os dois lados por ${den}.`);
-                steps.push(`$$ x ${finalSinal} \\frac{${num}}{${den}} $$`);
+                const displaySinal = mathJaxSinais[finalSinal];
+                steps.push(`$$ x ${displaySinal} \\frac{${num}}{${den}} $$`);
                 steps.push(`Simplificamos o resultado dividindo numerador e denominador por ${commonDivisorFinal}.`);
             } else if (nivel === 'medio') {
                 steps.push("4. Dividimos e simplificamos o resultado final.");
             }
 
             const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
-            steps.push(`Solução final: $$ x ${finalSinal} ${finalSolutionDisplay} $$`);
+            const displaySinal = mathJaxSinais[finalSinal];
+            steps.push(`Solução final: $$ x ${displaySinal} ${finalSolutionDisplay} $$`);
 
             return { sinal: finalSinal, num: simplifiedNum, den: simplifiedDen, steps };
         };
@@ -346,7 +361,6 @@
 
             const { sinal: correctSinal, num: correctNum, den: correctDen, steps } = resolverInequacao('dificil');
 
-            // Normalize user input for comparison
             let userSimplifiedNum = userNum;
             let userSimplifiedDen = userDen;
             const userCommonDivisor = gcd(userNum, userDen);
