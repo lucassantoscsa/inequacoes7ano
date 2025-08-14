@@ -278,7 +278,7 @@
 
             if (finalX < 0) {
                 if (nivel === 'facil') {
-                    steps.push("O coeficiente de 'x' é negativo. Precisamos multiplicar por -1 e inverter o sinal da inequação.");
+                    steps.push("O coeficiente de 'x' é negativo. Precisamos multiplicar por $(-1)$ e inverter o sinal da inequação.");
                 } else if (nivel === 'medio') {
                     steps.push("3. O coeficiente de 'x' é negativo. Multiplicamos por -1 e invertemos o sinal.");
                 }
@@ -304,12 +304,8 @@
             } else if (nivel === 'medio') {
                 steps.push("4. Dividimos e simplificamos o resultado final.");
             }
-            if (simplifiedNum < 0) {
-                const simplifiedNum1 = -simplifiedNum;
-                const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `-\\frac{${simplifiedNum1}}{${simplifiedDen}}`;}else{
-                    const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
-                }
 
+            const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
             const displaySinal = mathJaxSinais[finalSinal];
             steps.push(`Solução final: $$ x ${displaySinal} ${finalSolutionDisplay} $$`);
 
