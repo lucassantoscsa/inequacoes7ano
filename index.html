@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolução de Inequações</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              primary: '#6b46c1',
+              secondary: '#9f7aea',
+              accent: '#d6bcfa',
+              background: '#f7fafc',
+              text: '#2d3748',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f7fafc;
+        color: #2d3748;
+      }
+      .btn {
+        @apply px-4 py-2 rounded-lg font-semibold transition-colors duration-200;
+      }
+      .btn-primary {
+        @apply bg-primary text-white hover:bg-secondary;
+      }
+      .btn-secondary {
+        @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+      }
+      .math-display {
+        @apply bg-white p-6 rounded-lg shadow-md my-6 overflow-x-auto;
+      }
+      .answer-input-group {
+        @apply flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 rounded-lg bg-white shadow-md;
+      }
+    </style>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
+    <div class="max-w-4xl w-full mx-auto p-6 bg-white rounded-xl shadow-lg">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-primary">Resolução de Inequações</h1>
+        
+        <!-- Student Info and Controls -->
+        <div id="controls-section" class="flex flex-col sm:flex-row justify-between items-center bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
+            <input type="text" id="aluno-name" placeholder="Digite seu nome completo" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg mb-4 sm:mb-0">
+            <button id="start-btn" class="btn btn-primary w-full sm:w-auto">Começar</button>
+        </div>
+
+        <!-- Main Game Area -->
+        <div id="game-area" class="hidden">
+            <!-- Inequation Display -->
+            <div id="inequation-display" class="math-display text-center text-xl sm:text-2xl font-mono">
+                <!-- Inequation will be rendered here -->
+            </div>
+
+            <!-- Answer Input -->
+            <div class="answer-input-group">
+                <span class="text-xl sm:text-2xl font-bold">x</span>
+                
+                <select id="sinal-select" class="px-4 py-2 rounded-lg border border-gray-300 text-lg">
+                    <option value="<">&lt;</option>
+                    <option value="leq">&le;</option>
+                    <option value=">">&gt;</option>
+                    <option value="geq">&ge;</option>
+                </select>
+
+                <span class="text-xl sm:text-2xl font-bold"> = </span>
+
+                <input type="text" id="numerador-input" placeholder="Numerador" class="w-24 sm:w-32 px-4 py-2 text-center rounded-lg border border-gray-300">
+                <span class="text-xl sm:text-2xl font-bold">/</span>
+                <input type="text" id="denominador-input" placeholder="Denominador" class="w-24 sm:w-32 px-4 py-2 text-center rounded-lg border border-gray-300">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap justify-center mt-6 space-x-2 sm:space-x-4">
+                <button id="submit-btn" class="btn btn-primary">Verificar</button>
+                <button id="help-btn" class="btn btn-secondary">Ajuda</button>
+                <button id="next-btn" class="btn btn-primary hidden">Próxima</button>
+            </div>
+            
+            <!-- Feedback and Solution Area -->
+            <div id="feedback-area" class="mt-8 p-4 rounded-lg">
+                <!-- Feedback and solution steps will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Final Results Area -->
+        <div id="results-area" class="hidden text-center mt-8 p-6 bg-gray-100 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4">Resultados Finais</h2>
+            <p id="final-results" class="text-lg"></p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to manage game state
+        let aluno = "";
+        let feitas = 0;
+        let certas = 0;
+        let inicio = 0;
+        let currentQuestionData = {};
+        const MAX_QUESTIONS = 5; // You can change the number of questions here
+
+        // DOM elements
+        const alunoNameInput = document.getElementById('aluno-name');
+        const startBtn = document.getElementById('start-btn');
+        const controlsSection = document.getElementById('controls-section');
+        const gameArea = document.getElementById('game-area');
+        const inequationDisplay = document.getElementById('inequation-display');
+        const sinalSelect = document.getElementById('sinal-select');
+        const numeradorInput = document.getElementById('numerador-input');
+        const denominadorInput = document.getElementById('denominador-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackArea = document.getElementById('feedback-area');
+        const resultsArea = document.getElementById('results-area');
+        const finalResults = document.getElementById('final-results');
+
+        // Helper function to get random integer
+        const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        // Helper function for GCD (Greatest Common Divisor)
+        const gcd = (a, b) => {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) {
+                [a, b] = [b, a % b];
+            }
+            return a;
+        };
+
+        // Helper function for LCM (Least Common Multiple)
+        const lcm = (a, b) => (a === 0 || b === 0) ? 0 : Math.abs(a * b) / gcd(a, b);
+        
+        // Function to handle sign display for positive and negative numbers
+        // This function is for terms inside parentheses like (bx+c)
+        const getSign = (num) => num >= 0 ? `+${num}` : `${num}`;
+        
+        // Function to format the expression for the step-by-step guide
+        const formatExpression = (xCoeff, cCoeff) => {
+            let expression = '';
+            // Handle the x-term
+            if (xCoeff !== 0) {
+                expression = `${xCoeff}x`;
+            }
+            // Handle the constant term
+            if (cCoeff !== 0) {
+                if (xCoeff === 0) {
+                    expression = `${cCoeff}`;
+                } else {
+                    expression += cCoeff > 0 ? ` + ${cCoeff}` : ` - ${Math.abs(cCoeff)}`;
+                }
+            }
+            // Handle case where both are zero
+            if (xCoeff === 0 && cCoeff === 0) {
+                expression = '0';
+            }
+            return expression;
+        };
+
+        // Function to generate a new inequation
+        const gerarInequacao = () => {
+            const inteiros = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            const naturais = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const sinais = ["<", "\\leq", ">", "\\geq"];
+            
+            while (true) {
+                const a = randomInt(-12, 12);
+                const b = randomInt(-12, 12);
+                const c = randomInt(-12, 12);
+                const d = randomInt(1, 9);
+                const e = randomInt(-12, 12);
+                const f = randomInt(-12, 12);
+                const g = randomInt(-12, 12);
+                const h = randomInt(1, 9);
+                const sinal = sinais[randomInt(0, 3)];
+
+                const mmc = lcm(d, h);
+                const leftX = (mmc / d) * a * b;
+                const rightX = (mmc / h) * e * f;
+                
+                if (leftX - rightX !== 0) {
+                    currentQuestionData = { a, b, c, d, sinal, e, f, g, h };
+                    break;
+                }
+            }
+            renderInequation();
+        };
+
+        // Renders the inequation using MathJax
+        const renderInequation = () => {
+            const { a, b, c, d, sinal, e, f, g, h } = currentQuestionData;
+            inequationDisplay.innerHTML = `$$ \\frac{${a}(${b}x${getSign(c)})}{${d}} ${sinal} \\frac{${e}(${f}x${getSign(g)})}{${h}} $$`;
+            MathJax.typeset();
+        };
+
+        // Translates the Python logic to resolve the inequation, returning a structured object
+        const resolverInequacao = (nivel) => {
+            let { a, b, c, d, sinal, e, f, g, h } = currentQuestionData;
+            const originalSinal = sinal;
+            const sinalMapping = { "<": ">", "\\leq": "\\geq", ">": "<", "\\geq": "\\leq" };
+            let steps = [];
+
+            if (nivel === 'facil' || nivel === 'medio') {
+                steps.push("Primeiro, vamos simplificar os termos se possível.");
+                let simplifiedLeft = false;
+                if (gcd(a, d) !== 1) {
+                    const commonDivisor = gcd(a, d);
+                    a = a / commonDivisor;
+                    d = d / commonDivisor;
+                    simplifiedLeft = true;
+                    steps.push(`Simplificando o lado esquerdo, dividindo o numerador e o denominador por ${commonDivisor}.`);
+                }
+                if (gcd(e, h) !== 1) {
+                    const commonDivisor = gcd(e, h);
+                    e = e / commonDivisor;
+                    h = h / commonDivisor;
+                    steps.push(`Simplificando o lado direito, dividindo o numerador e o denominador por ${commonDivisor}.`);
+                }
+                if (simplifiedLeft) {
+                    steps.push(`Nova inequação: $$ \\frac{${a}(${b}x${getSign(c)})}{${d}} ${sinal} \\frac{${e}(${f}x${getSign(g)})}{${h}} $$`);
+                }
+            }
+
+            const mmc = lcm(d, h);
+            if (nivel === 'facil') {
+                steps.push(`Para remover os denominadores, igualamos eles tirando o MMC de ${d} e ${h}, que é ${mmc}.`);
+                const newLeftNum = (mmc / d) * a;
+                const newRightNum = (mmc / h) * e;
+                steps.push(`Ficamos com: $$ \\frac{${newLeftNum}(${b}x${getSign(c)})}{${mmc}} ${sinal} \\frac{${newRightNum}(${f}x${getSign(g)})}{${mmc}} $$`);
+                steps.push("Agora podemos remover os denominadores e aplicar a propriedade distributiva.");
+            } else if (nivel === 'medio') {
+                steps.push("1. Removemos os denominadores e aplicamos a propriedade distributiva.");
+            }
+
+            const leftX = (mmc / d) * a * b;
+            const leftC = (mmc / d) * a * c;
+            const rightX = (mmc / h) * e * f;
+            const rightG = (mmc / h) * e * g;
+            
+            if (nivel === 'facil' || nivel === 'medio') {
+                 let leftExpression = formatExpression(leftX, leftC);
+                 let rightExpression = formatExpression(rightX, rightG);
+                 steps.push(`$$ ${leftExpression} ${sinal} ${rightExpression} $$`);
+                 steps.push("Isolamos os termos com 'x' do lado esquerdo e os constantes do lado direito.");
+            }
+
+            const finalX = leftX - rightX;
+            const finalC = rightG - leftC;
+            
+            // This case should be blocked by the equation generation logic, but kept for robustness
+            if (finalX === 0) {
+                return { sinal: null, num: null, den: null, steps: ["A inequação é indefinida, pois o termo de 'x' foi cancelado."] };
+            }
+
+            if (nivel === 'facil') {
+                 let finalStepExpression = formatExpression(finalX, 0);
+                 steps.push(`$$ ${finalStepExpression} ${sinal} ${finalC} $$`);
+            }
+
+            let num = finalC;
+            let den = finalX;
+            let finalSinal = sinal;
+
+            if (finalX < 0) {
+                if (nivel === 'facil') {
+                    steps.push("O coeficiente de 'x' é negativo. Precisamos multiplicar por $(-1)$ e inverter o sinal da inequação.");
+                } else if (nivel === 'medio') {
+                    steps.push("3. O coeficiente de 'x' é negativo. Multiplicamos por $(-1)$ e invertemos o sinal.");
+                }
+                finalSinal = sinalMapping[sinal];
+                den = Math.abs(den);
+                num = -num;
+            }
+            
+            const commonDivisorFinal = gcd(num, den);
+            const simplifiedNum = num / commonDivisorFinal;
+            const simplifiedDen = den / commonDivisorFinal;
+
+            // Normalize the sign to the numerator for consistent comparison and display
+            if (simplifiedDen < 0) {
+                simplifiedNum = -simplifiedNum;
+                simplifiedDen = -simplifiedDen;
+            }
+
+            if (nivel === 'facil') {
+                steps.push(`Dividimos os dois lados por ${den}.`);
+                steps.push(`$$ x ${finalSinal} \\frac{${num}}{${den}} $$`);
+                steps.push(`Simplificamos o resultado dividindo numerador e denominador por ${commonDivisorFinal}.`);
+            } else if (nivel === 'medio') {
+                steps.push("4. Dividimos e simplificamos o resultado final.");
+            }
+
+            const finalSolutionDisplay = simplifiedDen === 1 ? simplifiedNum : `\\frac{${simplifiedNum}}{${simplifiedDen}}`;
+            steps.push(`Solução final: $$ x ${finalSinal} ${finalSolutionDisplay} $$`);
+
+            return { sinal: finalSinal, num: simplifiedNum, den: simplifiedDen, steps };
+        };
+
+        // Start button event listener
+        startBtn.addEventListener('click', () => {
+            aluno = alunoNameInput.value.trim();
+            if (aluno === "") {
+                // Custom alert box since window.alert() is not available
+                const alertBox = document.createElement('div');
+                alertBox.innerHTML = `
+                    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+                        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                            <div class="mt-3 text-center">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Erro</h3>
+                                <div class="mt-2 px-7 py-3">
+                                    <p class="text-sm text-gray-500">Por favor, digite seu nome.</p>
+                                </div>
+                                <div class="items-center px-4 py-3">
+                                    <button id="close-alert-btn" class="px-4 py-2 bg-primary text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary">
+                                        OK
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(alertBox);
+                document.getElementById('close-alert-btn').addEventListener('click', () => {
+                    alertBox.remove();
+                });
+                return;
+            }
+            inicio = Date.now();
+            feitas = 0;
+            certas = 0;
+            controlsSection.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+            nextQuestion();
+        });
+
+        // Submit button event listener
+        submitBtn.addEventListener('click', () => {
+            const userSinal = sinalSelect.value;
+            const userNum = parseInt(numeradorInput.value);
+            const userDen = parseInt(denominadorInput.value || '1');
+
+            if (isNaN(userNum) || isNaN(userDen)) {
+                feedbackArea.innerHTML = `<p class="text-red-500 font-bold text-center">Por favor, insira um número válido.</p>`;
+                return;
+            }
+
+            const { sinal: correctSinal, num: correctNum, den: correctDen, steps } = resolverInequacao('dificil');
+
+            // Normalize user input for comparison
+            let userSimplifiedNum = userNum;
+            let userSimplifiedDen = userDen;
+            const userCommonDivisor = gcd(userNum, userDen);
+            userSimplifiedNum /= userCommonDivisor;
+            userSimplifiedDen /= userCommonDivisor;
+
+            if (userSimplifiedDen < 0) {
+                userSimplifiedNum = -userSimplifiedNum;
+                userSimplifiedDen = -userSimplifiedDen;
+            }
+
+            if (userSinal === correctSinal && userSimplifiedNum === correctNum && userSimplifiedDen === correctDen) {
+                feedbackArea.innerHTML = `<p class="text-green-600 font-bold text-center">Parabéns, você acertou!</p>`;
+                certas++;
+            } else {
+                // Get full step-by-step solution for incorrect answers
+                const { steps: fullSteps } = resolverInequacao('facil');
+                let stepsHtml = fullSteps.map(step => `<p class="text-gray-700">${step}</p>`).join('');
+                feedbackArea.innerHTML = `<p class="text-red-600 font-bold text-center">Infelizmente você errou. Entenda como resolver:</p><div class="math-display">${stepsHtml}</div>`;
+                MathJax.typeset();
+            }
+            
+            submitBtn.classList.add('hidden');
+            helpBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+        });
+
+        // Help button event listener
+        helpBtn.addEventListener('click', () => {
+            let nivel = 'facil';
+            if (feitas > 0 && certas / feitas > 0.75) {
+                nivel = 'medio';
+            } else if (feitas > 0 && certas / feitas > 0.25) {
+                nivel = 'medio';
+            } else {
+                nivel = 'facil';
+            }
+            const { steps } = resolverInequacao(nivel);
+            let stepsHtml = steps.map(step => `<p class="text-gray-700">${step}</p>`).join('');
+            feedbackArea.innerHTML = `<p class="text-blue-600 font-bold text-center">Aqui está a ajuda passo a passo:</p><div class="math-display">${stepsHtml}</div>`;
+            MathJax.typeset();
+        });
+
+        // Next button event listener
+        nextBtn.addEventListener('click', () => {
+            feitas++;
+            if (feitas >= MAX_QUESTIONS) {
+                showResults();
+                return;
+            }
+            
+            feedbackArea.innerHTML = '';
+            numeradorInput.value = '';
+            denominadorInput.value = '';
+            submitBtn.classList.remove('hidden');
+            helpBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            
+            gerarInequacao();
+        });
+
+        // Function to start the next question
+        const nextQuestion = () => {
+            gerarInequacao();
+            // This is the first question
+            if (feitas === 0) {
+              feitas = 1;
+            } else {
+              feitas++;
+            }
+        };
+
+        // Function to display final results
+        const showResults = () => {
+            gameArea.classList.add('hidden');
+            resultsArea.classList.remove('hidden');
+            const totalTime = ((Date.now() - inicio) / 1000).toFixed(2);
+            const score = ((certas / feitas) * 100).toFixed(2);
+            finalResults.innerHTML = `
+                <p>Nome do Aluno: <span class="font-bold">${aluno}</span></p>
+                <p>Percentual de Acertos: <span class="font-bold text-primary">${score}%</span></p>
+                <p>Tempo total: <span class="font-bold">${totalTime} segundos</span></p>
+            `;
+        };
+    </script>
+</body>
+</html>
